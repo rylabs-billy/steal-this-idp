@@ -1,0 +1,7 @@
+name: marketplace-apl-cluster
+description: APL Cluster for the Akamai/Linode Marketplace
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: linode-go

@@ -1,0 +1,10 @@
+/vendor/
+.history/
+helm/charts/
+deleteme
+out.txt
+all.yaml
+.vscode
+main
+guide.md
+apl/self-hosted
