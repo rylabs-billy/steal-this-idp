@@ -8,7 +8,7 @@ This repo packages a basic proof of concept for using Pulumi IaC and ESC to prog
 
 The installation bootstraps a GitOps architecture with an opinionated collection of golden path templates for CNCF projects to cover all the fundamental pillars of a production-ready environment. Beyond the provided templates, the platform is extensible to other CNCF projects and your own custom resources. You can build your castle the way you want―everything is open source!
 
-Jump to [getting started](#getting-started) if you're looking to walk through this as a hands-on lab
+Jump to [getting started](#getting-started) if you're looking to walk through this as a hands-on lab.
 
 ### Motivation
 Consisting mostly of CNCF projects, the App Platform eats the burden of complexity, while being portable, extensible, and fully capable of self-hosting. Albeit still in beta (GA date TBA), the [Akamai Cloud Marketplace](https://www.linode.com/marketplace/apps/) team began looking at App Platform for internal use. We found it to be great candidate for own team-level IDP, and a great example of eating our own dog food!
@@ -21,7 +21,7 @@ The App Platform itself however, was designed for the UI experience―not the ev
 As it comes baked with the **_teams experience_** and other essentials for an IDP, it can be utilized as such. More specifically, it can functionally be used as one large **_golden path template_** for building an IDP; a solid starting point, baseline, or skeleton.
 
 - Cloud-native Development: \
-Any development team in need of a production-grade Kubernetes runtime that "just works" to run their cloud native workloads, should.
+Any development team in need of a production-grade Kubernetes runtime that "just works" to run their cloud native workloads.
 
 
 ## Getting Started
