@@ -1,5 +1,5 @@
 cluster:
-  name: apl-cluster
+  name: apl-demo
   provider: linode
   domainSuffix: {{ .domain }}
 otomi:
@@ -72,7 +72,7 @@ obj:
       secretAccessKey: {{ .secretKey }}
       buckets:
         {{- range .buckets }}
-        {{ . }}: apl-{{ . }}
+        {{ . }}: {{ .prefix }}-{{ . }}
         {{- end }}
 platformBackups:
   database:

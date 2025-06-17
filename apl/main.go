@@ -33,7 +33,8 @@ func main() {
 			region        = "nl-ams"
 			email         = "bthompso@akamai.com"
 			nodePoolArray = []*linode_config.LinodeLkeNodePool{}
-			aplBuckets    = []string{
+			objPrefix     = "apl"
+			objBuckets    = []string{
 				"loki",
 				"cnpg",
 				"velero",
@@ -71,8 +72,8 @@ func main() {
 				return err
 			}
 
-			for _, bucket := range aplBuckets {
-				bucketName := fmt.Sprintf("apl-%s", bucket)
+			for _, bucket := range objBuckets {
+				bucketName := fmt.Sprintf("%s-%s", objPrefix, bucket)
 				_, err := linode_config.NewLinodeObjBucket(ctx, bucketName, &linode_config.LinodeObjBucketArgs{
 					Key:    objkey,
 					Region: region,
@@ -87,7 +88,7 @@ func main() {
 			initialNodePool := &linode_config.LinodeLkeNodePool{
 				Autoscale: true,
 				NodeLabels: map[string]string{
-					"platform":    "apl-cluster",
+					"platform":    "apl-demo",
 					"environment": "dev",
 				},
 				Tags: []string{
@@ -99,7 +100,7 @@ func main() {
 			}
 			nodePoolArray = append(nodePoolArray, initialNodePool)
 
-			aplcluster, err = linode_config.NewLinodeLkeCluster(ctx, "apl-cluster", &linode_config.LinodeLkeClusterArgs{
+			aplcluster, err = linode_config.NewLinodeLkeCluster(ctx, "apl-demo", &linode_config.LinodeLkeClusterArgs{
 				NodePools:          nodePoolArray,
 				Region:             region,
 				StaticLoadBalancer: true,
@@ -175,7 +176,8 @@ func main() {
 				"token":            token,
 				"accessKey":        objAccessKey,
 				"secretKey":        objSecretKey,
-				"buckets":          aplBuckets,
+				"prefix":           objPrefix,
+				"buckets":          objBuckets,
 				"nodebalancerId":   nbid,
 				"nodebalancerIpv4": infraInfo.NodeBalancer.Ipv4,
 				"nodebalancerTag":  loadbalancer.Tag,
@@ -197,7 +199,7 @@ func main() {
 				ReuseValues:     true,
 				Timeout:         1200,
 				ValuesFile:      values,
-				Version:         "v4.5.0",
+				Version:         "v4.6.0",
 				WaitForJobs:     false,
 			}
 
