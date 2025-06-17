@@ -46,7 +46,7 @@ type K8sOptions struct {
 
 type HelmOptions struct {
 	Chart           string
-	CreateNameSpace bool
+	CreateNamespace bool
 	DisableWebhooks bool
 	Lint            bool
 	Name            string
@@ -99,7 +99,7 @@ func NewKubeClusterConfig(ctx *pulumi.Context, clusterName string, clusterArgs *
 
 	_, err = helm.NewRelease(ctx, helmOpts.Chart, &helm.ReleaseArgs{
 		Chart:           pulumi.String(helmOpts.Chart),
-		CreateNamespace: pulumi.Bool(helmOpts.CreateNameSpace),
+		CreateNamespace: pulumi.Bool(helmOpts.CreateNamespace),
 		DisableWebhooks: pulumi.Bool(helmOpts.DisableWebhooks),
 		Lint:            pulumi.Bool(helmOpts.Lint),
 		Name:            pulumi.String(chartName),

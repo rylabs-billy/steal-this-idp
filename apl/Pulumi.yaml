@@ -1,5 +1,5 @@
-name: marketplace-apl-cluster
-description: APL Cluster for the Akamai/Linode Marketplace
+name: apl-demo
+description: App Platform Demo
 runtime: go
 config:
   pulumi:tags:

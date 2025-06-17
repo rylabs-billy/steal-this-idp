@@ -41,7 +41,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	stack := auto.FullyQualifiedStackName("bthompso", "marketplace-apl-cluster", "dev")
+	stack := auto.FullyQualifiedStackName("bthompso", "apl-demo", "dev")
 	workDir := filepath.Join("..", "apl")
 	stdoutStreamer := optup.ProgressStreams(os.Stdout)
 
