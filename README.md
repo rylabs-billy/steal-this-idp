@@ -36,84 +36,41 @@ Pulumi Cloud is the backend for our `dev` [stack](https://www.pulumi.com/docs/ia
 3. [Go](https://go.dev/doc/install) >= v1.24.1: \
 Pulumi IaC and Automation API code is written in Golang with the [v3 SDK](https://pkg.go.dev/github.com/pulumi/pulumi/sdk/v3/go/pulumi).
 
-4. [Age](https://github.com/FiloSottile/age?tab=readme-ov-file#installation): \
-Age is required as the KMS provider for using [SOPS](https://github.com/getsops/sops) to encrypt sensitive values in git repositories.
-
-5. [git-credential-oauth](https://github.com/hickford/git-credential-oauth) (optional): \
+4. [git-credential-oauth](https://github.com/hickford/git-credential-oauth) (optional): \
 Gitea access secured by Keycloak authentication, and `ssh` is not currently supported. This means that to clone or push/pull from a repo, you have to enter the username and password each time. To get around this annoyance, after the initial installation completes, navigate to Gitea and create an [API access token](https://docs.gitea.com/development/api-usage) with the required scopes. Install and configure the `pass-git-helper` in your for local `.gitconfig`. Use the API token in place of your user password.
 
 
-### Configure Secrets
-We picked [Pulumi ESC](https://www.pulumi.com/docs/esc/) (Environments, Secrets, and Configuration) as the platform secret store due to its native integration with Pulumi IaC, and to simplify secret rotation if this becomes a long term solution.
+### Configure Environment
+We picked [Pulumi ESC](https://www.pulumi.com/docs/esc/) (Environments, Secrets, and Configuration) as the platform secret store due to its native integration with Pulumi IaC, and to simplify secret rotation if this becomes a long term solution. This requires creating a ESC environment to reference in our Pulumi stack.
 
-Log in to the Pulumi web app, generate an [access token](https://www.pulumi.com/docs/pulumi-cloud/access-management/access-tokens/#creating-personal-access-tokens). Navigate to the **apl** directory where the `Pulumi.dev.yaml` file is located and then log in to your account with the `pulumi` CLI.
+We'll also want to create new keys for Linode Object Storage, as well as [Age](https://github.com/FiloSottile/age?tab=readme-ov-file#installation)―the KMS provider for using [SOPS](https://github.com/getsops/sops) to encrypt sensitive values in git repositories.
 
-```
-cd apl/
-pulumi login
-```
+The `setup.sh` script is provided to make your life easier by automating _most_ of this initial setup. 😉 When complete, it will have also generated admin passwords for:
+- Develop (team)
+- Otomi (Keycloak admin)
+- Loki
 
-Using the `esc` CLI, create a new environment to expose to the stack. The shorthand name of our stack in this example is `dev`. The project name is `apl-demo`. The full project-qualified name is `bthompso/apl-demo/dev`.
 
-```
-esc env init apl-demo/dev
-```
+> [!NOTE]
+> Before running the setup script, ensure that you have both a Pulumi Cloud [access token](https://www.pulumi.com/docs/pulumi-cloud/access-management/access-tokens/#creating-personal-access-tokens), and a [Linode API token](https://techdocs.akamai.com/cloud-computing/docs/manage-personal-access-tokens).
+>
+> For **demo purposes**, give the Linode API key full read/write on all scopes, with an expiration of one month. In production, you'd ideally want to narrow scopes as much as possible. See [example](https://techdocs.akamai.com/cloud-computing/docs/manage-personal-access-tokens#create-an-api-token).
 
-Get a Linode [API Token](https://techdocs.akamai.com/linode-api/reference/get-started) and Linode Object Storage [access keys](https://techdocs.akamai.com/cloud-computing/docs/getting-started-with-object-storage#generate-an-access-keyhttps://techdocs.akamai.com/cloud-computing/docs/getting-started-with-object-storage#generate-an-access-key).
+The script will interactively prompt you to paste your Linode and Pulumi tokens. Alternatively you can set these values as `PULUMI_ACCESS_TOKEN` and `LINODE_TOKEN` environment variables prior to execution. 
 
-```
-esc env set apl-demo/dev linode.token <TOKEN> --secret
-esc env set apl-demo/dev linode.objAccessKey <ACCESS_KEY>
-esc env set apl-demo/dev linode.objSecretKey <SECRET_KEY> --secret
-```
+```bash
+# optional: change editor to VS code (defaults to vim)
+export EDITOR="code"
 
-Next let's generate random passwords for the `otomi` user, the `develop` team, and the admin password for [Loki](https://grafana.com/oss/loki/), and then add them to our environment.
-
-```
-for i in otomi develop loki; do
-  pass=$(uuidgen | md5sum | base64)
-  echo "$i: $pass"
-done
-...
-otomi: ZWU3NjVlZGIyMzRhZjYzNTA4ZGM2ZDcxZDU1MDQ1ZGUgIC0K
-develop: ZjIxNTc5YWIyNmE1MWUxZDQ0MjVhZTllOGZiZWI2YTUgIC0K
-loki: Nzk1ZmJlNzMyOGY1ZjA0ZTVlNzE1ODJhNDJlNGQ3MmIgIC0K
+# run setup
+./setup.sh
 ```
 
-```
-esc env set apl-demo/dev apl.otomi.adminPassword ZWU3NjVlZGIyMzRhZjYzNTA4ZGM2ZDcxZDU1MDQ1ZGUgIC0K --secret
-esc env set apl-demo/dev apl.loki.adminPassword ZjIxNTc5YWIyNmE1MWUxZDQ0MjVhZTllOGZiZWI2YTUgIC0K --secret
-esc env set apl-demo/dev apl.team.develop.password Nzk1ZmJlNzMyOGY1ZjA0ZTVlNzE1ODJhNDJlNGQ3MmIgIC0K --secret
-```
+The script ends by opening the ESC environment for editing. If you set `EDITOR="code"` in the previous step, this will appear in a new tab in VS code. Otherwise it simply opens in your terminal with `vim`.
 
-Since App Platform uses GitOps, we'll configure [SOPS](https://github.com/getsops/sops) with the [Age](https://github.com/FiloSottile/age) provider. Some [external providers](https://apl-docs.net/docs/get-started/installation/sops#use-sops-with-an-external-key-management-service-kms) are supported, but with Age we can keep it vendor agnostic.
+This manual step, is to map the environment values to references for our stack to consume. With the editor open, add the following `pulumiConfig` block under the top level `values` key.
 
-Use the `age-keygen` command to generate small explicit keys. Add the public and private keys to the environment as well.
-
-```
-age-keygen
-...
-# created: 2025-05-19T16:14:25-07:00
-# public key: age1zeg7pezzjaejx6aa0xhg6fdf3j02e73l0pqsu7a768efr2k6wg5srv5sed
-AGE-SECRET-KEY-1HV3LZTJX958J4JXU9EHS3Y0CA9DPFKZGRDWMJQRWW8L5CXV7L6FS96DQSE
-```
-```
-esc env set apl-demo/dev apl.age.publicKey age1zeg7pezzjaejx6aa0xhg6fdf3j02e73l0pqsu7a768efr2k6wg5srv5sed
-esc env set apl-demo/dev apl.age.privateKey AGE-SECRET-KEY-1HV3LZTJX958J4JXU9EHS3Y0CA9DPFKZGRDWMJQRWW8L5CXV7L6FS96DQSE
-```
-
-Open and edit the environment to map these values for our stack. and update the [stack config]() to use that environment. The below example is using the `pulumi` CLI to do that, instead of the `esc` CLI as we did in the other examples.
-
-> [!Tip]
-> You can change the editor (defaults to vim) to VS Code with `export EDITOR="code"`
-
-```
-pulumi env edit bthompso/apl-demo/dev
-```
-
-With the editor open, add the `pulumiConfig` block under the top level `values` key, and map these values we just set to a variable reference that stacks can use.
-
-```
+```yaml
 # bthompso/apl-demo/dev (org/project/stack)
 ...
 pulumiConfig:
@@ -127,122 +84,22 @@ pulumiConfig:
     apl:teamDevelopPassword: ${apl.team.develop.password}
 ```
 
-The complete file should look something like the following:
-```
-values:
-  linode:
-    token:
-      fn::secret:
-        ciphertext: ZXNjeAAAAAEAAAEA7C2Oh+tR86aDoKf2W3TNUH4c4WhEVInw93f2bFeJhBp6KVmblfsxkoCVfIbAX1yCPZQqBU7h/bNAW+FL0VfQrj5uks2VwgSbRmIefVZj832Hg9kdT5jIkz4kAZ/o66Ny
-    objAccessKey: 27V1GS8ESHI9PFGMZAD2
-    objSecretKey:
-      fn::secret:
-        ciphertext: ZXNjeAAAAAEAAAEAlQiO1B6fUxUHTsCuJTDYvRfwEb+grZmBaLfF/FvTZOaTFk/CkSWXvicKuU2eOgx3OypjeqKEOVw5lIvx1cKkVkI8JqjGoi/V
-  pulumiConfig:
-    linode:token: ${linode.token}
-    linode:objSecretKey: ${linode.objSecretKey}
-    linode:objAccessKey: ${linode.objAccessKey}
-    apl:agePublicKey: ${apl.age.publicKey}
-    apl:agePrivateKey: ${apl.age.privateKey}
-    apl:otomiAdminPassword: ${apl.otomi.adminPassword}
-    apl:lokiAdminPassword: ${apl.loki.adminPassword}
-    apl:teamDevelopPassword: ${apl.team.develop.password}
-  apl:
-    age:
-      publicKey: age1zeg7pezzjaejx6aa0xhg6fdf3j02e73l0pqsu7a768efr2k6wg5srv5sed
-      privateKey:
-        fn::secret:
-          ciphertext: ZXNjeAAAAAEAAAEAeD8/WjpLO9DxPcMMrhKbpxlLHIPqAAZS+5H+mrqw+nlJOLA2sY3hkVCzD9ILofw0THz8lHDDIRYfCACD3u5ui96uFic+atVDuCAVrVXIH7vTovRMlhzftcelg+izktzm9eRxPBeZIWMqKg==
-    otomi:
-      adminPassword:
-        fn::secret:
-          ciphertext: ZXNjeAAAAAEAAAEA6KxvcE8T++5NW3GLNduNC8bcpeTpd8OSfQXyO5S0bBHIRIDlcdg0h9eIZrhN0u/t+ISCd8NeKt+N8QNYeqxtDMfEudkluS6tkaS+L7hhOr4=
-    loki:
-      adminPassword:
-        fn::secret:
-          ciphertext: ZXNjeAAAAAEAAAEA6/94K5M0EFLHTuLdogIysoDc8eWzQKkQnOdgHed5AdECVavhv1u58uJ71KSo4kSqnvB9MHpBfiJEBQAec5RDXaPCV4lM3/dyTSGT8bqzgsk=
-    team:
-      develop:
-        password:
-          fn::secret:
-            ciphertext: ZXNjeAAAAAEAAAEAvBMrTuSEc8D+JVO7soQo8a0a7j3sI9rNeIYRVuHLkEI4Nhyl00ilrjSTnbyYS5i8X6va7XJ2J/1xeziegtZC9yAsMhOVB4uOMjhdnd1IhxY=
----
-# Please edit the environment definition above.
-# The object below is the current result of
-# evaluating the environment and will not be
-# saved. An empty definition aborts the edit.
+The complete file should look something like this <a href="https://gist.github.com/rylabs-billy/035029f2b5a8688d977a1505a8855456" target="_blank">example</a>.
 
-{
-  "apl": {
-    "age": {
-      "privateKey": "[unknown]",
-      "publicKey": "age1zeg7pezzjaejx6aa0xhg6fdf3j02e73l0pqsu7a768efr2k6wg5srv5sed"
-    },
-    "loki": {
-      "adminPassword": "[unknown]"
-    },
-    "otomi": {
-      "adminPassword": "[unknown]"
-    },
-    "team": {
-      "develop": {
-        "password": "[unknown]"
-      }
-    }
-  },
-  "linode": {
-    "objAccessKey": "27V1GS8ESHI9PFGMZAD2",
-    "objSecretKey": "[unknown]",
-    "token": "[unknown]"
-  },
-  "pulumiConfig": {
-    "apl:agePrivateKey": "[unknown]",
-    "apl:agePublicKey": "age1zeg7pezzjaejx6aa0xhg6fdf3j02e73l0pqsu7a768efr2k6wg5srv5sed",
-    "apl:lokiAdminPassword": "[unknown]",
-    "apl:otomiAdminPassword": "[unknown]",
-    "apl:teamDevelopPassword": "[unknown]",
-    "linode:objAccessKey": "27V1GS8ESHI9PFGMZAD2",
-    "linode:objSecretKey": "[unknown]",
-    "linode:token": "[unknown]",
-  },
-}
-```
-
-Exit the editor to save the changes, then update the local stack file to use the environment―this will be the `Pulumi.dev.yaml`file.
-
-```
-# apl-demo/apl/Pulumi.dev.yaml
-environment:
-  - apl-demo/dev
-config:
-  pulumi:tags:
-    pulumi:template: linode-go
-```
-
-Using the `pulumi` CLI, pick just one secret and verify the stack can access and decrypt the value as needed. The below example checks that we can access the Loki admin password, which is mapped as `apl:lokiAdminPassword`.
-
-> [!CAUTION]
-> The following command will display a secret value in plain text.
-
-```
-pulumi config get apl:lokiAdminPassword
-```
-
-If the **plain text** password displays correctly, then everything is working as it should. Rotate this secret and move before moving on the next step.
 
 ### Deploy the App Platform
 Navigate to the `automation` directory from the repository root. This directory contains code for the [Pulumi Automation API](https://www.pulumi.com/docs/iac/using-pulumi/automation-api/), to which we're using to automate manual invocations of the `pulumi up` command. We're doing this for a couple reasons:
 
 1. Although still heavily prototyping, at some point we'll likely want to break up this monolithic `dev` stack into smaller [micro stacks](https://www.pulumi.com/docs/iac/using-pulumi/organizing-projects-stacks/#micro-stacks), and let the Automation API tie them all together. By implementing it now, we can begin to model what that'll look like.
 
-2. This particular project leverages two pulumi providers―Linode and Kubernetes―with the latter being responsible for creating a cloud resource (NodeBalancer) and the former responsible for it after. For simplicity's sake, to pass resource info from one to the other while strictly controlling the order of operations happening on that resource, calls for two different invocations of `pulumi up`. The Automation API makes this all one fluid motion.
+2. This particular project leverages two Pulumi providers―Linode and Kubernetes―with the latter being responsible for creating a cloud resource (NodeBalancer) and the former responsible for it after. For simplicity's sake, to pass resource info from one to the other while strictly controlling the order of operations happening on that resource, calls for two different invocations of `pulumi up`. The Automation API makes this all one fluid motion.
 
 The code organized as four execution steps, which provision the cloud infrastructure resources (LKE, NodeBalancer, DNS, OBJ) and install the App Platform. If all goes smoothly, then this happens in one shot. In the event that a timeout or some other error occurs in the process, it will pick up from last successfully completed stage. Based on the Automation API [examples](https://github.com/pulumi/automation-api-examples/tree/main/go), appending the `destroy` argument will invoke a tear down.
 
 > [!NOTE]
 > As a reminder, this code represents a sister project that is still prototyping. All of this is subject to change.
 
-```
+```go
 go run main.go [destroy]
 ```
 
