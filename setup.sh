@@ -109,19 +109,8 @@ brew_chk() {
 
 random_pass() {
   # Generate random password that meets Keycloak requirements
-  chars=$(echo {A..Z} {a..z} {0..9} '@#$%^\*()_+\-=[]{}|\.'| tr -d ' ')
-  pass=$(uuidgen | md5sum | base64 | head -c 5)
-
-  for i in $(shuf -i 0-3); do
-    case $i in
-      0) pass+=$(dd if=/dev/random | tr -dc 'A-Z' | head -c 2);;
-      1) pass+=$(dd if=/dev/random | tr -dc 'a-z' | head -c 2);;
-      2) pass+=$(dd if=/dev/random | tr -dc '0-9' | head -c 1);;
-      3) pass+=$(dd if=/dev/random | tr -dc '@#$%^\*()_+\-=[]{}|\.' | head -c 1);;
-    esac
-  done
-
-  pass+=$(dd if=/dev/random | tr -dc $chars | head -c 29)
+  p=$(uuidgen | md5sum | base64)
+  pass=$(echo $p | fold -w1 | shuf | tr -d '\n')
   echo -e $pass
 }
 
