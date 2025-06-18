@@ -3,7 +3,7 @@ cluster:
   provider: linode
   domainSuffix: {{ .domain }}
 otomi:
-  adminPassword: '{{ .otomiAdmin }}'
+  adminPassword: {{ .otomiAdmin }}
   hasExternalDNS: true
 dns:
   domainFilters: 
