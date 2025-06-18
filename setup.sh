@@ -111,7 +111,7 @@ random_pass() {
   # Generate random password that meets Keycloak requirements
   p=$(uuidgen | md5sum | base64)
   pass=$(echo $p | fold -w1 | shuf | tr -d '\n')
-  echo -e $pass
+  echo -ne $pass
 }
 
 linode_setup() {
@@ -125,7 +125,10 @@ linode_setup() {
     --header 'accept: application/json' \
     --header "authorization: Bearer $LINODE_TOKEN" \
     --header 'content-type: application/json' \
-    --data '{ "label": "apl-demo-key" }' | jq -r .label,.access_key,.secret_key))
+    --data '{ "label": "apl-demo-key" }' | jq -r .access_key,.secret_key))
+  
+  obj_access_key=$(echo -ne "${obj[0]}" | tr -d '\n')
+  obj_secret_key=$(echo -ne "${obj[1]}" | tr -d '\n')
 }
 
 pulumi_setup() {
@@ -149,8 +152,8 @@ pulumi_setup() {
   msg login && pulumi login
   msg env $stack && esc env init $stack
   msg set linode.token && esc env set $stack linode.token $LINODE_TOKEN --secret
-  msg set linode.objAccessKey && esc env set $stack linode.objAccessKey "${obj[1]}"
-  msg set linode.objSecretKey && esc env set $stack linode.objSecretKey "${obj[2]}" --secret
+  msg set linode.objAccessKey && esc env set $stack linode.objAccessKey $obj_access_key
+  msg set linode.objSecretKey && esc env set $stack linode.objSecretKey $obj_secret_key --secret
   msg set apl.age.publicKey && esc env set $stack apl.age.publicKey $age_public_key
   msg set apl.age.privateKey && esc env set $stack apl.age.privateKey $age_secret_key --secret
 
@@ -189,8 +192,8 @@ age_setup() {
 
   msg age
   keypair=$(age-keygen 2> /dev/null)
-  age_public_key=$(echo $keypair | awk -F ' ' '{print $7}')
-  age_secret_key=$(echo $keypair | awk -F ' ' '{print $8}')
+  age_public_key=$(echo -ne $keypair | awk -F ' ' '{print $7}' | tr -d '\n')
+  age_secret_key=$(echo -ne $keypair | awk -F ' ' '{print $8}' | tr -d '\n')
 }
 
 # main
