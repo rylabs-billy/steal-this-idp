@@ -72,7 +72,7 @@ obj:
       secretAccessKey: {{ .secretKey }}
       buckets:
         {{- range .buckets }}
-        {{ . }}: {{ .prefix }}-{{ . }}
+        {{ . }}: {{ $.prefix }}-{{ . }}
         {{- end }}
 platformBackups:
   database:
