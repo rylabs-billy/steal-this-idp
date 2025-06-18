@@ -199,7 +199,7 @@ func main() {
 				ReuseValues:     true,
 				Timeout:         1200,
 				ValuesFile:      values,
-				Version:         "v4.6.0",
+				Version:         "v4.5.0",
 				WaitForJobs:     false,
 			}
 
@@ -212,6 +212,33 @@ func main() {
 				return err
 			}
 		}
+
+		// new
+		// if step == "4" {
+		// 	pko := "pulumi-kubernetes-operator"
+		// 	pulumiChart := k8s_config.HelmOptions{
+		// 		Chart: pko,
+		// 		CreateNamespace: true,
+		// 		Name:            pko,
+		// 		Namespace:       pko,
+		// 		Repo:            "oci://ghcr.io/pulumi/helm-charts/pulumi-kubernetes-operator",
+		// 		Version: "2.0.0",
+		// 	}
+		// 	pulumiOperator, err := k8s_config.NewKubeClusterConfig(ctx, pko, &k8s_config.KubeClusterConfigArgs{
+		// 		ClusterResource: aplcluster,
+		// 		HelmChart:       pulumiChart,
+		// 	}, pulumi.Provider(linodeProvider), pulumi.DependsOn([]pulumi.Resource{aplcluster}))
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	_, err := yaml.NewConfigFile(ctx, "pulumi-service-account", &yaml.ConfigFileArgs{
+		//         File: "./apl/k8s_config/manifests/pulumi-service-account.yaml",
+		//     },)
+		// 	if err != nil {
+		//     	return err
+		// 	}
+		// end new
+		// }
 		return nil
 	})
 }
