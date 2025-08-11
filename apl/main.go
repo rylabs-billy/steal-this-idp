@@ -29,6 +29,7 @@ func main() {
 			ageKey        = aplcfg.Require("agePublicKey")
 			agePrivKey    = aplcfg.Require("agePrivateKey")
 			lokiAdmin     = aplcfg.Require("lokiAdminPassword")
+			aplVersion    = "4.8.0"
 			domainName    = "demo.linodemarketplace.xyz"
 			region        = "nl-ams"
 			email         = "bthompso@akamai.com"
@@ -137,6 +138,7 @@ func main() {
 				if infraInfo.Domain.Id > 0 {
 					apldomain.Update(infraInfo.Domain)
 					apldomain.SetDefaultRecords(ctx, infraInfo)
+					// check for removal
 					linode_config.AplDnsRecords(ctx, infraInfo.Domain.Id, infraInfo.NodeBalancer.Ipv4)
 				}
 			}
@@ -199,7 +201,7 @@ func main() {
 				ReuseValues:     true,
 				Timeout:         1200,
 				ValuesFile:      values,
-				Version:         "v4.6.0",
+				Version:         aplVersion,
 				WaitForJobs:     false,
 			}
 
@@ -207,7 +209,7 @@ func main() {
 				ClusterResource: aplcluster,
 				HelmChart:       aplChart,
 				LoadBalancer:    loadbalancer,
-			}, pulumi.Provider(linodeProvider), pulumi.DependsOn([]pulumi.Resource{aplcluster, apldomain}))
+			}, pulumi.Provider(linodeProvider), pulumi.DependsOn([]pulumi.Resource{aplcluster, apldomain}), pulumi.DeletedWith(aplcluster))
 			if err != nil {
 				return err
 			}

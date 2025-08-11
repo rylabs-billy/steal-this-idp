@@ -38,7 +38,7 @@ type LinodeLkeNodePool struct {
 
 func (c *LinodeLkeClusterArgs) LkeDefaults() {
 	if c.K8sVersion == "" {
-		c.K8sVersion = "1.32"
+		c.K8sVersion = "1.33"
 	}
 	if c.Region == "" {
 		c.Region = "us-ord"
