@@ -77,20 +77,20 @@ obj:
 platformBackups:
   database:
     gitea:
-        enabled: true
-        pathSuffix: gitea
-        retentionPolicy: 7d
-        schedule: 0 0 * * *
+      enabled: true
+      pathSuffix: gitea
+      retentionPolicy: 7d
+      schedule: 0 0 * * *
     harbor:
-        enabled: true
-        pathSuffix: harbor
-        retentionPolicy: 7d
-        schedule: 0 1 * * *
+      enabled: true
+      pathSuffix: harbor
+      retentionPolicy: 7d
+      schedule: 0 1 * * *
     keycloak:
-        enabled: true
-        pathSuffix: keycloak
-        retentionPolicy: 7d
-        schedule: 0 2 * * *
+      enabled: true
+      pathSuffix: keycloak
+      retentionPolicy: 7d
+      schedule: 0 2 * * *
   persistentVolumes:
     linodeApiToken: {{ .token }}
   gitea:
@@ -120,3 +120,19 @@ teamConfig:
           value: '50'
         - name: services.loadbalancers
           value: '10'
+users:
+  - email: bthompso@akamai.com
+    firstName: Billy
+    lastName: Thompson
+    isPlatformAdmin: true
+    isTeamAdmin: false
+    teams: []
+    initialPassword: {{ randInitPass }}
+  - email: bthompson@linode.com
+    firstName: Ryan
+    lastName: Thompson
+    isPlatformAdmin: false
+    isTeamAdmin: true
+    teams:
+      - develop
+    initialPassword: {{ randInitPass }}

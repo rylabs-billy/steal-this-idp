@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pulumi/pulumi-linode/sdk/v4/go/linode"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"gopkg.in/yaml.v2"
@@ -148,8 +149,17 @@ func DecodeString(s interface{}) string {
 	}
 }
 
+func randInitPass() string {
+	return uuid.NewString()
+}
 func YamlTemplate(ctx *pulumi.Context, tpl string, values map[string]any, write ...bool) string {
-	t, err := template.ParseFiles(tpl)
+	_, file := filepath.Split(tpl)
+
+	funcMap := template.FuncMap{
+		"randInitPass": randInitPass,
+	}
+
+	t, err := template.New(file).Funcs(funcMap).ParseFiles(tpl)
 	if err != nil {
 		msg := fmt.Sprintf("error parsing values template file: %v", err)
 		ctx.Log.Error(msg, nil)
@@ -313,6 +323,7 @@ func AssertResource(o ...any) bool {
 	return result
 }
 
+// check for removal
 func NewWaitForUrl(ctx *pulumi.Context, url string, args *WaitForUrlArgs, opts ...pulumi.ResourceOption) (*WaitForUrl, error) {
 	var urlresource WaitForUrl
 	err := ctx.RegisterComponentResource("pkg:index:WaitForUrl", url, &urlresource, opts...)
