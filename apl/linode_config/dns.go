@@ -14,7 +14,8 @@ type LinodeDomain struct {
 	pulumi.ResourceState
 
 	DomainName pulumi.StringOutput `pulumi:"domainName"`
-	DomainId   int                 `pulumi:"domainId"`
+	Id         int                 `pulumi:"domainId"`
+	Ctx        *pulumi.Context     `pulumi:"domainCtx"` // new
 }
 
 type LinodeDomainArgs struct {
@@ -95,19 +96,32 @@ func NewLinodeDomain(ctx *pulumi.Context, domainName string, domainArgs *LinodeD
 	return &domainResource, nil
 }
 
-func (d *LinodeDomain) Update(i utils.DomainSpec) {
-	d.DomainId = i.Id
+func (d *LinodeDomain) Update(ctx *pulumi.Context, i utils.DomainSpec) *LinodeDomain {
+	d.Id = i.Id
+	d.Ctx = ctx
+	return d
 }
 
-func (d *LinodeDomain) SetDefaultRecords(ctx *pulumi.Context, i utils.InfraResourceInfo) {
+func (d *LinodeDomain) SetDefaultRecords(i utils.InfraResourceInfo) *LinodeDomain {
 	dr := LinodeDomainRecord{
 		Ipv4: i.NodeBalancer.Ipv4,
 		Ipv6: i.NodeBalancer.Ipv6,
 	}
-	CreateDomainRecord(ctx, d.DomainId, dr)
+	CreateDomainRecord(d.Ctx, d.Id, dr, d)
+	return d
 }
 
-func CreateDomainRecord(ctx *pulumi.Context, id int, record LinodeDomainRecord) error {
+func (d *LinodeDomain) AplDnsRecords(i utils.InfraResourceInfo, a []string) {
+	for _, app := range a {
+		aRec := LinodeDomainRecord{
+			Ipv4: i.NodeBalancer.Ipv4,
+			Name: app,
+		}
+		CreateDomainRecord(d.Ctx, d.Id, aRec, d)
+	}
+}
+
+func CreateDomainRecord(ctx *pulumi.Context, id int, record LinodeDomainRecord, domain *LinodeDomain) error {
 	check := func(err error) error {
 		if err != nil {
 			if !strings.Contains(err.Error(), "hostname and IP address already exists") {
@@ -148,7 +162,7 @@ func CreateDomainRecord(ctx *pulumi.Context, id int, record LinodeDomainRecord) 
 			Name:       pulumi.String(record.Name),
 			RecordType: pulumi.String(rtype),
 			Target:     pulumi.String(target),
-		})
+		}, pulumi.DeletedWith(domain))
 		if err != nil {
 			return err
 		}
@@ -169,52 +183,4 @@ func CreateDomainRecord(ctx *pulumi.Context, id int, record LinodeDomainRecord) 
 	}
 
 	return nil
-}
-
-func AplDnsRecords(ctx *pulumi.Context, id int, ip string) {
-	apps := []string{
-		"alertmanager",
-		"api",
-		"argocd",
-		"auth",
-		"console",
-		"drone",
-		"gitea",
-		"grafana",
-		"harbor",
-		"jaeger",
-		"keycloak",
-		"prometheus",
-		"tekton",
-		"tty",
-	}
-
-	teamApps := []string{
-		"alertmanager-develop",
-		"grafana-develop",
-		"tekton-develop",
-	}
-
-	apps = append(apps, teamApps...)
-
-	for _, app := range apps {
-		appTxt1 := fmt.Sprintf("a-%s-txt", app)
-		appTxt2 := fmt.Sprintf("%s-txt", app)
-		extDns := "\"heritage=external-dns,external-dns/owner=default\""
-		aRec := LinodeDomainRecord{
-			Ipv4: ip,
-			Name: app,
-		}
-		txtRec1 := LinodeDomainRecord{
-			Name: appTxt1,
-			Txt:  extDns,
-		}
-		txtRec2 := LinodeDomainRecord{
-			Name: appTxt2,
-			Txt:  extDns,
-		}
-		CreateDomainRecord(ctx, id, aRec)
-		CreateDomainRecord(ctx, id, txtRec1)
-		CreateDomainRecord(ctx, id, txtRec2)
-	}
 }
