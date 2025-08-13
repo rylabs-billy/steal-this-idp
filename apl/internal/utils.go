@@ -46,10 +46,7 @@ type WaitForDnsArgs struct {
 	Timeout int
 }
 
-type DnsIsReady struct {
-	Auth     bool
-	Keycloak bool
-}
+type DnsIsReady map[string]bool
 
 type InfraResourceInfo struct {
 	Domain       DomainSpec
@@ -72,6 +69,16 @@ func (i *InfraResourceInfo) GetDomainInfo(ctx *pulumi.Context, query string) {
 
 func (i *InfraResourceInfo) GetNodeBalancerInfo(ctx *pulumi.Context, query string, region string) {
 	i.NodeBalancer = getNodeBalancerInfo(ctx, query, region)
+}
+
+func (d DnsIsReady) Init(s []string) {
+	for _, i := range s {
+		d[i] = false
+	}
+}
+
+func (d DnsIsReady) Update(s string) {
+	d[s] = true
 }
 
 func getDomainInfo(ctx *pulumi.Context, query string) DomainSpec {
@@ -152,11 +159,13 @@ func DecodeString(s interface{}) string {
 func randInitPass() string {
 	return uuid.NewString()
 }
+
 func YamlTemplate(ctx *pulumi.Context, tpl string, values map[string]any, write ...bool) string {
 	_, file := filepath.Split(tpl)
 
 	funcMap := template.FuncMap{
 		"randInitPass": randInitPass,
+		// "objRegion":    objRegion,
 	}
 
 	t, err := template.New(file).Funcs(funcMap).ParseFiles(tpl)
@@ -304,6 +313,21 @@ func AssertResource(o ...any) bool {
 	var result bool
 	chk := func(i any) bool {
 		v := reflect.ValueOf(i)
+
+		if v.Kind() == reflect.Map {
+			for _, e := range v.MapKeys() {
+				val := v.MapIndex(e)
+				switch t := val.Interface().(type) {
+				case bool:
+					if !t {
+						return false
+					}
+				default:
+					return true
+				}
+			}
+		}
+
 		if v.IsValid() && !v.IsZero() {
 			return true
 		}
@@ -319,7 +343,8 @@ func AssertResource(o ...any) bool {
 		}
 		return result
 	}
-	result = chk(o)
+
+	result = chk(o[0])
 	return result
 }
 

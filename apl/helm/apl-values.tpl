@@ -66,6 +66,7 @@ kms:
       privateKey: '{{ .agePrivKey }}'
 obj:
   provider:
+    type: linode
     linode:
       region: {{ .region }}
       accessKeyId: {{ .accessKey }}

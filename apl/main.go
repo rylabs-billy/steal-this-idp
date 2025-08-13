@@ -34,8 +34,14 @@ func main() {
 			region        = "nl-ams"
 			email         = "bthompso@akamai.com"
 			nodePoolArray = []*linode_config.LinodeLkeNodePool{}
+			dnsIsReady    = make(utils.DnsIsReady)
 			objPrefix     = "apl"
-			objBuckets    = []string{
+			subdomains    = []string{
+				"api",
+				"auth",
+				"keycloak",
+			}
+			objBuckets = []string{
 				"loki",
 				"cnpg",
 				"velero",
@@ -52,7 +58,6 @@ func main() {
 			loadbalancer *linode_config.StaticLoadBalancer
 			infraInfo    utils.InfraResourceInfo
 			apldomain    *linode_config.LinodeDomain
-			dnsIsReady   utils.DnsIsReady
 		)
 
 		// configure linode provider
@@ -136,24 +141,17 @@ func main() {
 				aplcluster.StaticLoadBalancer(loadbalancer)
 
 				if infraInfo.Domain.Id > 0 {
-					apldomain.Update(infraInfo.Domain)
-					apldomain.SetDefaultRecords(ctx, infraInfo)
-					// check for removal
-					linode_config.AplDnsRecords(ctx, infraInfo.Domain.Id, infraInfo.NodeBalancer.Ipv4)
+					apldomain.Update(ctx, infraInfo.Domain).SetDefaultRecords(infraInfo).AplDnsRecords(infraInfo, subdomains)
 				}
 			}
 		}
 
 		if step >= "2" && utils.AssertResource(aplcluster, apldomain, infraInfo) {
-			subdomains := []string{
-				"auth",
-				"keycloak",
-			}
-
+			dnsIsReady.Init(subdomains)
 			for _, domain := range subdomains {
 				resourceName := fmt.Sprintf("%sDnsReady", domain)
 				fqdn := fmt.Sprintf("%s.%s", domain, domainName)
-				_, err := utils.NewWaitForDns(ctx, resourceName, &utils.WaitForDnsArgs{
+				ready, err := utils.NewWaitForDns(ctx, resourceName, &utils.WaitForDnsArgs{
 					Domain:  fqdn,
 					Ip:      infraInfo.NodeBalancer.Ipv4,
 					Timeout: 10,
@@ -161,19 +159,17 @@ func main() {
 				if err != nil {
 					return err
 				}
-				if domain == "auth" {
-					dnsIsReady.Auth = true
-				}
-				if domain == "keycloak" {
-					dnsIsReady.Keycloak = true
+				if utils.AssertResource(ready) {
+					dnsIsReady.Update(domain)
 				}
 			}
 		}
 
 		if step == "3" && utils.AssertResource(aplcluster, apldomain, infraInfo, dnsIsReady) {
 			nbid := strconv.Itoa(infraInfo.NodeBalancer.Id)
+			objRegion := fmt.Sprintf("%s-1", region)
 			override := map[string]any{
-				"region":           region,
+				"region":           objRegion,
 				"domain":           domainName,
 				"token":            token,
 				"accessKey":        objAccessKey,
