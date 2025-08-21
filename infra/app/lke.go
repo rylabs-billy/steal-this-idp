@@ -7,7 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	utils "github.com/rylabs-billy/steal-this-idp/tree/refactor/micro-stacks/infra/internal"
+	// utils "github.com/rylabs-billy/steal-this-idp/infra/internal@refactor/micro-stacks"
+	utils "github.com/rylabs-billy/steal-this-idp/infra/internal"
 
 	"gopkg.in/yaml.v2"
 

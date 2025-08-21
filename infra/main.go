@@ -7,7 +7,8 @@ import (
 	"github.com/pulumi/pulumi-linode/sdk/v4/go/linode"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-	"github.com/rylabs-billy/steal-this-idp/tree/refactor/micro-stacks/infra/app"
+	"github.com/rylabs-billy/steal-this-idp/infra/app"
+	// "github.com/rylabs-billy/steal-this-idp/infra/app@@refactor/micro-stacks"
 )
 
 func main() {

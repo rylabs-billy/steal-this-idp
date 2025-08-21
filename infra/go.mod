@@ -1,4 +1,4 @@
-module github.com/rylabs-billy/steal-this-idp/tree/refactor/micro-stacks/infra
+module github.com/rylabs-billy/steal-this-idp/infra
 
 go 1.24.1
 
