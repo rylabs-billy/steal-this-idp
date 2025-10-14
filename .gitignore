@@ -8,3 +8,5 @@ all.yaml
 main
 guide.md
 apl/self-hosted
+scripts/wiz.sh
+go.work*

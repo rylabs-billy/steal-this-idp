@@ -1,0 +1,5 @@
+environment:
+  - apl-demo/dev
+config:
+  pulumi:tags:
+    pulumi:template: linode-go
