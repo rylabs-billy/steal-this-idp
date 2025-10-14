@@ -6,7 +6,7 @@ import (
 	"github.com/pulumi/pulumi-kubernetes/sdk/v4/go/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 
-	utils "steal-this-idp/utils"
+	utils "github.com/rylabs-billy/steal-this-idp/utils"
 )
 
 const (
