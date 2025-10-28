@@ -164,12 +164,12 @@ teamConfig:
         path: chart/hello-world
         revision: HEAD
 files:
-  env/teams/demo/workloadValues/nodejs-helloworld.yaml: |
+  env/teams/develop/workloadValues/nodejs-helloworld.yaml: |
     values: |
       image:
         repository: otomi/nodejs-helloworld
         tag: v1.2.13
-  env/teams/demo/workloadValues/nginx-deployment.yaml: |
+  env/teams/develop/workloadValues/nginx-deployment.yaml: |
     values: |
       fullnameOverride: nginx-deployment
       image:
