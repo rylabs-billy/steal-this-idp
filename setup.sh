@@ -226,6 +226,7 @@ build_apl() {
     printf "\n\n\t${GREY}echo >> $bashconf${RESET}"
     printf "\n\t${GREY}echo "# app platform" >> $bashconf${RESET}"
     printf "\n\t${GREY}echo "export PATH=\$PATH:$bindir" >> $bashconf${RESET}\n"
+  fi
 }
 
 # main
