@@ -234,4 +234,5 @@ brew_chk
 age_setup
 linode_setup
 pulumi_setup
+build_apl
 msg complete
