@@ -12,6 +12,11 @@ func main() {
 		cfg := config.New(ctx, "linode")
 		aplcfg := config.New(ctx, "apl")
 		aplVars := map[string]string{
+			"domain":      aplcfg.Require("domain"),
+			"infraSlug":   aplcfg.Require("infraSlug"),
+			"region":      aplcfg.Require("region"),
+			"email":       aplcfg.Require("email"),
+			"label":       aplcfg.Require("label"),
 			"otomiAdmin":  aplcfg.Require("otomiAdminPassword"),
 			"teamDevelop": aplcfg.Require("teamDevelopPassword"),
 			"ageKey":      aplcfg.Require("agePublicKey"),
