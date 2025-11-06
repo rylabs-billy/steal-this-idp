@@ -1,7 +1,0 @@
-environment:
-  - apl-demo/dev
-config:
-  pulumi:tags:
-    pulumi:template: linode-go
-  apl-demo:step: "4"
-  apl-demo:complete: "3"
