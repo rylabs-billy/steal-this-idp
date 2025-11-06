@@ -41,7 +41,7 @@ func GetNodeBalancer(ctx *pulumi.Context, region, tag string, opt ...interface{}
 	}
 
 	retry := 0
-	for range 3 {
+	for range 5 {
 		result := searchNodeBalancer(ctx, nbinfo)
 		if len(result.Nodebalancers) > 0 {
 			nb.id = result.Nodebalancers[0].Id
@@ -54,7 +54,7 @@ func GetNodeBalancer(ctx *pulumi.Context, region, tag string, opt ...interface{}
 		retry++
 	}
 
-	if retry >= 3 && !utils.AssertResource(nb) {
+	if retry >= 5 && !utils.AssertResource(nb) {
 		return NodeBalancer{}
 	}
 

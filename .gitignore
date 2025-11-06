@@ -10,3 +10,5 @@ guide.md
 apl/self-hosted
 scripts/wiz.sh
 go.work*
+reset.sh
+cmd/automation/aplcli

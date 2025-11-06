@@ -61,7 +61,7 @@ type StaticLoadbalancerArgs struct {
 	Annotations map[string]string
 	Label       string
 	Kubecfg     string
-	Provider    *linode.Provider
+	Region      string
 }
 
 type KubeSvc struct {
@@ -231,6 +231,7 @@ func NewLkeProvider(ctx *pulumi.Context, providerName string, args *LkeProviderA
 
 func NewStaticLoadbalancer(ctx *pulumi.Context, loadbalancerName string, args *StaticLoadbalancerArgs, opts ...pulumi.ResourceOption) (*StaticLoadbalancer, error) {
 	var loadbalancerResource StaticLoadbalancer
+	region := args.Region
 
 	// default label if none was provided
 	if args.Label == "" {

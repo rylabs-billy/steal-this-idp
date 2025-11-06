@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	aplVersion = "4.11.1"
+	aplVersion = "4.12.1"
 	slug       = "bthompso/apl-demo-infra/dev"
 )
 
@@ -74,10 +74,14 @@ func (r *AplResourceInfo) Run(ctx *pulumi.Context) error {
 
 func run(ctx *pulumi.Context, r *AplResourceInfo) error {
 	// run func
-	var st StackRef
+	var (
+		st     StackRef
+		dn     = r.Apl["domain"]
+		slug   = r.Apl["infraSlug"]
+		region = r.Apl["region"]
+	)
 
 	st.Init(ctx, slug)
-	dn := st.Details("domainName").Value.(string)
 	ipv4 := st.Details("ipv4").Value.(string)
 	kubecfg := st.Details("kubeconfig").SecretValue.(string)
 	label := st.Details("aplDemoLabel").Value.(string)
@@ -85,26 +89,27 @@ func run(ctx *pulumi.Context, r *AplResourceInfo) error {
 	nbTag := st.Details("loadbalancerTag").Value.(string)
 	obj := st.Details("obj").SecretValue.(map[string]interface{})
 	objBuckets := st.Details("objBuckets").Value.([]interface{})
-	region := st.Details("region").Value.(string)
 	subs := st.Details("subdomains").Value.(map[string]interface{})
 
 	objRegion := fmt.Sprintf("%v-1", region)
 	override := map[string]any{
-		"region":           objRegion,
-		"domain":           dn,
-		"token":            r.Token,
-		"accessKey":        obj["accessKey"],
-		"secretKey":        obj["secretKey"],
-		"prefix":           obj["objPrefix"],
-		"buckets":          objBuckets,
-		"nodebalancerId":   nbId,
-		"nodebalancerIpv4": ipv4,
-		"nodebalancerTag":  nbTag,
-		"ageKey":           r.Apl["ageKey"],
-		"agePrivKey":       r.Apl["agePrivKey"],
-		"lokiAdmin":        r.Apl["lokiAdmin"],
-		"otomiAdmin":       r.Apl["otomiAdmin"],
-		"teamDevelop":      r.Apl["teamDevelop"],
+		"region":             objRegion,
+		"domain":             dn,
+		"token":              r.Token,
+		"accessKey":          obj["accessKey"],
+		"secretKey":          obj["secretKey"],
+		"prefix":             obj["objPrefix"],
+		"buckets":            objBuckets,
+		"nodebalancerId":     nbId,
+		"nodebalancerIpv4":   ipv4,
+		"nodebalancerTag":    nbTag,
+		"ageKey":             r.Apl["ageKey"],
+		"agePrivKey":         r.Apl["agePrivKey"],
+		"lokiAdmin":          r.Apl["lokiAdmin"],
+		"otomiAdmin":         r.Apl["otomiAdmin"],
+		"teamDevelop":        r.Apl["teamDevelop"],
+		"platformAdminEmail": r.Apl["email"],
+		"platformLabel":      r.Apl["label"],
 	}
 
 	k, err := utils.DecodeKubeConfig(label, kubecfg, true)

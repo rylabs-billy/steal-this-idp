@@ -43,9 +43,9 @@ func (parallelism) ApplyOption(opts *optdestroy.Options) {
 
 const (
 	prog    = "aplcli"
-	stack   = "dev"
-	project = "apl-demo"
-	org     = "bthompso"
+	stack   = "_STACK_"
+	project = "_PROJECT_"
+	org     = "_ORG_"
 	Blue    = "\033[34;1m"
 	Green   = "\033[32;1m"
 	Grey    = "\033[37;1m"
@@ -57,6 +57,15 @@ const (
 func Run() {
 	ctx := context.Background()
 
+	// change to binary working dir and join relative paths for auto workspaces
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Printf("\n%s%-10s %s failed to get executable path: %s %s\n", Red, "[error]", Grey, exePath, Reset)
+	}
+	wkDir := filepath.Dir(exePath)
+	os.Chdir(wkDir)
+
+	// define pulumi stacks
 	infraStack := microStack{
 		fqsn:    fmt.Sprintf("%s/%s-infra/%s", org, project, stack),
 		name:    "infra",
@@ -72,6 +81,7 @@ func Run() {
 		"apl":   aplStack,
 	}
 
+	// create or destroy
 	cmd := Init(ctx, stkMap, os.Args)
 	cmd.Doit(ctx)
 }
