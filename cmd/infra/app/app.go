@@ -13,11 +13,7 @@ import (
 )
 
 const (
-	label      = "apl-demo"
 	k8sVersion = "1.33"
-	domainName = "demo.billythompson.io"
-	region     = "nl-ams"
-	email      = "bthompso@akamai.com"
 	objPrefix  = "apl"
 	nbLabel    = "StaticLoadbalancer"
 	nbTag      = "apl-static-lb"
@@ -25,6 +21,7 @@ const (
 )
 
 type PulumiResourceInfo struct {
+	Data      map[string]string
 	Resources map[string]interface{}
 	Token     string
 }
@@ -46,6 +43,12 @@ func (r *PulumiResourceInfo) Config(ctx *pulumi.Context) error {
 
 func build(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 	// cloud infra build func
+	var (
+		domainName = r.Data["domain"]
+		email      = r.Data["email"]
+		label      = r.Data["label"]
+		region     = r.Data["region"]
+	)
 	objBuckets := []string{
 		"loki",
 		"cnpg",
@@ -64,13 +67,6 @@ func build(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 		"apl",
 		"dev",
 	}
-
-	// linode: configure provider
-	linodeProvider, _ := linode.NewProvider(ctx, "linodeProvider", &linode.ProviderArgs{
-		ObjBucketForceDelete: pulumi.Bool(true),
-		Token:                pulumi.String(r.Token),
-	})
-	r.Resources["linodeProvider"] = linodeProvider
 
 	// obj: create a separate, region scoped key
 	objkey, err := linode.NewObjectStorageKey(ctx, "pulumi-obj-key", &linode.ObjectStorageKeyArgs{
@@ -181,6 +177,12 @@ func build(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 
 func conf(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 	// cloud infra config func
+	var (
+		domainName = r.Data["domain"]
+		region     = r.Data["region"]
+		label      = r.Data["label"]
+	)
+
 	domain := r.Resources["domain"].(*linode.Domain)
 	lke := r.Resources["aplcluster"].(*linode.LkeCluster)
 	lkepv := r.Resources["lkeProvider"].(*kubernetes.Provider)
@@ -196,14 +198,14 @@ func conf(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 		}
 
 		retry := 0
-		for range 3 {
+		for range 5 {
 			if res.Status == "ready" {
 				break
 			}
 			time.Sleep(5 * time.Second)
 			retry++
 		}
-		if res.Status != "ready" && retry == 3 {
+		if res.Status != "ready" && retry == 5 {
 			return 0, fmt.Errorf("error: timeout waiting for lke cluster after %d tries", retry)
 		}
 
@@ -218,18 +220,16 @@ func conf(ctx *pulumi.Context, r *PulumiResourceInfo) error {
 		}
 
 		// lke: deploy a static loadbalancer to the cluster
-		provider := r.Resources["linodeProvider"].(*linode.Provider)
 		loadbalancer, err := NewStaticLoadbalancer(ctx, nbLabel, &StaticLoadbalancerArgs{
 			Annotations: annotations,
 			Label:       nbLabel,
 			Kubecfg:     label,
-			Provider:    provider, // use secondary linode provider to avoid lookup issues
+			Region:      region,
 		}, pulumi.DependsOn([]pulumi.Resource{lke, lkepv}), pulumi.DeletedWith(domain))
 		if err != nil {
 			return err
 		}
 		r.Resources["loadbalancer"] = loadbalancer
-		ctx.Export(nbTag, loadbalancer.URN())
 	}
 
 	// dns: set default dns records for loadbalancer

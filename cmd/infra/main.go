@@ -10,11 +10,19 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		cfg := config.New(ctx, "linode")
+		aplcfg := config.New(ctx, "apl")
+		cfgData := map[string]string{
+			"domain": aplcfg.Require("domain"),
+			"label":  aplcfg.Require("label"),
+			"email":  aplcfg.Require("email"),
+			"region": aplcfg.Require("region"),
+		}
 		resources := make(map[string]interface{})
 
 		infra := &app.PulumiResourceInfo{
-			Token:     cfg.Require("token"),
+			Data:      cfgData,
 			Resources: resources,
+			Token:     cfg.Require("token"),
 		}
 		err := infra.Build(ctx)
 		if err != nil {
