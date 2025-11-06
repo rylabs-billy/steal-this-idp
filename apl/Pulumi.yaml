@@ -1,7 +1,0 @@
-name: apl-demo
-description: App Platform Demo
-runtime: go
-config:
-  pulumi:tags:
-    value:
-      pulumi:template: linode-go

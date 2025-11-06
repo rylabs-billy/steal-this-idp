@@ -153,8 +153,9 @@ random_pass() {
 pulumi_setup() {
   # configure pulumi esc secrets
   msg pulumi
-  local aplstack="apl-demo/dev"
-  local infrastack="apl-demo-infra/dev"
+  stack="dev"
+  aplstack="apl-demo/$stack"
+  infrastack="apl-demo-infra/$stack"
 
   if [ ! -d "$HOME/.pulumi/bin" ]; then
     msg install pulumi
@@ -169,7 +170,7 @@ pulumi_setup() {
   # login and init the infra stack
   cd $basedir/cmd/infra
   msg login && pulumi login
-  local user=$(pulumi whoami)
+  user=$(pulumi whoami)
   msg stack "$user/$infrastack"
   pulumi stack init $user/$infrastack
 
@@ -233,7 +234,12 @@ age_setup() {
 
 build_apl() {
   cd $basedir/cmd/automation
+  sed -i -e "s/_STACK_/$stack/" app/app.go 
+  sed -i -e "s/_PROJECT_/apl-demo/" app/app.go 
+  sed -i -e "s/_ORG_/$user/" app/app.go
+  sleep 2
   go build -o aplcli
+
   mkdir -p $bindir
   cd $bindir
   ln -sf $basedir/cmd/automation/aplcli aplcli

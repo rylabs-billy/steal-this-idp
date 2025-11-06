@@ -1,5 +1,5 @@
 cluster:
-  name: apl-demo
+  name: {{ .platformLabel }}
   provider: linode
   domainSuffix: {{ .domain }}
 otomi:
@@ -192,7 +192,7 @@ files:
         repository: otomi/nodejs-helloworld
         tag: v1.2.13
 users:
-  - email: bthompso@akamai.com
+  - email: {{ .platformAdminEmail }}
     firstName: Billy
     lastName: Thompson
     isPlatformAdmin: true
